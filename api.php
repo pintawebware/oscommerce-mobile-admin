@@ -115,10 +115,10 @@ if (isset($_GET['route'])) {
 *
 */
 function login() {
-    if (isset($_POST['username']) && isset($_POST['password']) && !isset($_POST['token'])) {
+    if (isset($_REQUEST['username']) && isset($_REQUEST['password']) && !isset($_REQUEST['token'])) {
         $accept = false;
-        $username = tep_db_prepare_input($_POST['username']);
-        $password = tep_db_prepare_input($_POST['password']);
+        $username = tep_db_prepare_input($_REQUEST['username']);
+        $password = tep_db_prepare_input($_REQUEST['password']);
 
         // email existing check
         $check_customer_query = tep_db_query("SELECT id, user_password, user_name FROM " . TABLE_ADMINISTRATORS . " WHERE user_name = '" . $username . "'");
@@ -139,9 +139,9 @@ function login() {
                     $token = md5(mt_rand());
                     tep_db_query("INSERT INTO user_token_mob_api (user_id, token) VALUES ( " . $customer_id . ", '" . $token . "')");
                 }
-                if (isset($_POST['device_token'])) {
-                    $device_token =$_POST['device_token'];
-                    $os_type = $_POST['os_type'] ? $_POST['os_type'] : '';
+                if (isset($_REQUEST['device_token'])) {
+                    $device_token =$_REQUEST['device_token'];
+                    $os_type = $_REQUEST['os_type'] ? $_REQUEST['os_type'] : '';
                     $device_token_exist_query = tep_db_query("SELECT device_token FROM user_device_mob_api WHERE device_token = '" . $device_token . "'");
                     if (0 == $device_token_exist_query->num_rows){
                         $device_token_exist = tep_db_fetch_array($device_token_exist_query);
@@ -195,7 +195,7 @@ function login() {
 *
 */
 function deleteUserDeviceToken() {
-    $old_token = $_POST['old_token'];
+    $old_token = $_REQUEST['old_token'];
     if(tep_db_fetch_array(tep_db_query("SELECT * FROM user_device_mob_api WHERE device_token='" . $old_token . "'"))){
         tep_db_query("DELETE FROM user_device_mob_api WHERE device_token='" . $old_token . "'");
         return json_encode(['response' => ['version' => API_VERSION, 'status' => true]]);
@@ -238,8 +238,8 @@ function deleteUserDeviceToken() {
 *
 */
 function updateUserDeviceToken() {
-    $old_token = $_POST['old_token'];
-    $new_token = $_POST['new_token'];
+    $old_token = $_REQUEST['old_token'];
+    $new_token = $_REQUEST['new_token'];
     if(tep_db_fetch_array(tep_db_query("SELECT * FROM user_device_mob_api WHERE device_token='" . $old_token . "'"))) {
         tep_db_query("UPDATE user_device_mob_api SET device_token='" . $new_token . "' WHERE device_token='" . $old_token . "'");
         return json_encode(['response' => ['version' => API_VERSION, 'status' => true]]);
@@ -1387,7 +1387,6 @@ function products() {
 * @apiSuccess {Number}  price          Price of the product.
 * @apiSuccess {String}  description    Detail description of the product.
 * @apiSuccess {String}  status_name    Satus of the product (Enabled|Disabled). 
-* @apiSuccess {Number}  sku            SKU of the product.
 * @apiSuccess {Array}   images         Array of the pictures of the product.
 * @apiSuccess {Array}   categories     Array of the categories of the product.
 * @apiSuccess {String}  currency_code  Default currency of the shop.
@@ -1405,7 +1404,6 @@ function products() {
 *         "price": "749.9900",
 *         "description": "Powered by a Cortex A8 1.0GHz application processor, the Samsung GALAXY Tab is designed to deliver high performance whenever and wherever you are.",
 *         "status_name": "Enabled",
-*         "sku": "28",
 *         "images": [
 *             {
 *                 "image_id": -1
@@ -1424,16 +1422,6 @@ function products() {
 *             {
 *                 "category_id": "21",
 *                 "name": "Gadgets"
-*             }
-*         ],
-*         "stock_statuses": [
-*             {
-*                 "status_id": "0",
-*                 "name": "Нет в наличии"
-*             },
-*             {
-*                 "status_id": "1",
-*                 "name": "В наличии"
 *             }
 *         ],
 *         "stock_status_name": "В наличии",
@@ -1471,7 +1459,6 @@ function productinfo() {
     p.products_price as price, 
     d.products_description as description,
     p.products_status as status_name,
-    p.products_id as sku,
     IFNULL(CONCAT('http://', '" . $_SERVER['SERVER_NAME'] . "', '/images/', p.products_image), '') AS images, 
     IFNULL(c.categories_id, 0) as categories 
     FROM " . TABLE_PRODUCTS . " p 
@@ -1558,21 +1545,21 @@ function changestatus() {
     if ($error_echo) {
         return $error_echo;
     }
-    if ((!isset($_POST['order_id']) && empty($_POST['order_id'])) || (!isset($_POST['status_id'])) && empty($_REQUEST['status_id'])) {
+    if ((!isset($_REQUEST['order_id']) && empty($_REQUEST['order_id'])) || (!isset($_REQUEST['status_id'])) && empty($_REQUEST['status_id'])) {
         return json_encode(['error' => "Missing some params", 'version' => API_VERSION, 'status' => false]);
     }
-    $status_id = (int)$_POST['status_id'];
+    $status_id = (int)$_REQUEST['status_id'];
     $status_query = tep_db_query("SELECT orders_status_id FROM " . TABLE_ORDERS_STATUS . " WHERE orders_status_id = " . $status_id);
     if (0 == $status_query->num_rows) {
         return json_encode(['error' => "Can not find status with id = " . $status_id, 'version' => API_VERSION, 'status' => false]);
     }
-    $order_id = (int)$_POST['order_id'];
+    $order_id = (int)$_REQUEST['order_id'];
     $order_query = tep_db_query("SELECT orders_id FROM " . TABLE_ORDERS . " WHERE orders_id = " . $order_id);
     if (0 == $order_query->num_rows) {
         return json_encode(['error' => "Can not find order with id = " . $order_id, 'version' => API_VERSION, 'status' => false]);
     }
-    $comment = isset($_POST['comment']) ? $_POST['comment'] : '';
-    $inform = isset($_POST['inform']) ? (int)$_POST['inform'] : 0;
+    $comment = isset($_REQUEST['comment']) ? $_REQUEST['comment'] : '';
+    $inform = isset($_REQUEST['inform']) ? (int)$_REQUEST['inform'] : 0;
 
     $query_update_order_status = "UPDATE " . TABLE_ORDERS . " SET orders_status = " . $status_id . " WHERE orders_id = " . $order_id;
     $query_update_status_history = "INSERT INTO " . TABLE_ORDERS_STATUS_HISTORY . " (orders_id, orders_status_id, date_added, customer_notified, comments) 
@@ -1630,10 +1617,10 @@ function delivery() {
     if ($error_echo) {
         return $error_echo;
     }
-    if ((!isset($_POST['order_id']) && empty($_POST['order_id'])) || (!isset($_POST['city']) && empty($_POST['city']) && !isset($_POST['address']) && empty($_POST['address']))) {
+    if ((!isset($_REQUEST['order_id']) && empty($_REQUEST['order_id'])) || (!isset($_REQUEST['city']) && empty($_REQUEST['city']) && !isset($_REQUEST['address']) && empty($_REQUEST['address']))) {
         return json_encode(['error' => "Missing some params", 'version' => API_VERSION, 'status' => false]);
     }
-    $order_id = (int)$_POST['order_id'];
+    $order_id = (int)$_REQUEST['order_id'];
     $order_query = tep_db_query("SELECT delivery_city, delivery_street_address FROM " . TABLE_ORDERS . " WHERE orders_id = " . $order_id);
     if (0 == $order_query->num_rows) {
         return json_encode(['error' => "Can not find order with id = " . $order_id, 'version' => API_VERSION, 'status' => false]);
@@ -1641,11 +1628,11 @@ function delivery() {
     $delivery = tep_db_fetch_array($order_query);
     $city = $delivery['delivery_city'];
     $address = $delivery['delivery_street_address'];
-    if (isset($_POST['city']) && !empty($_POST['city'])) {
-        $city = $_POST['city'];
+    if (isset($_REQUEST['city']) && !empty($_REQUEST['city'])) {
+        $city = $_REQUEST['city'];
     }
-    if (isset($_POST['address']) && !empty($_POST['address'])) {
-        $address = $_POST['address'];
+    if (isset($_REQUEST['address']) && !empty($_REQUEST['address'])) {
+        $address = $_REQUEST['address'];
     }
 
     $sql = "UPDATE " . TABLE_ORDERS . " SET delivery_street_address='" . $address . "', delivery_city='" . $city . "' WHERE orders_id=$order_id";
@@ -1720,7 +1707,7 @@ function updateproduct() {
         return $error_echo;
     }
     $success = false;
-    $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+    $product_id = isset($_REQUEST['product_id']) ? (int)$_REQUEST['product_id'] : 0;
 
     if (0 < $product_id) {
         $product_query = tep_db_query("SELECT products_id FROM " . TABLE_PRODUCTS . " WHERE products_id = " . $product_id);
@@ -1729,20 +1716,20 @@ function updateproduct() {
         }
     }
     $product = [];
-    if (isset($_POST['model']) && !empty($_POST['model'])) {
-        $product['products_model'] = $_POST['model'];
+    if (isset($_REQUEST['model']) && !empty($_REQUEST['model'])) {
+        $product['products_model'] = $_REQUEST['model'];
     }
     elseif (0 == $product_id) {
         $product['products_model'] = '';
     }
-    if (isset($_POST['quantity']) && !empty($_POST['quantity'])) {
-        $product['products_quantity'] = (int)$_POST['quantity'];
+    if (isset($_REQUEST['quantity']) && !empty($_REQUEST['quantity'])) {
+        $product['products_quantity'] = (int)$_REQUEST['quantity'];
     }
-    if (isset($_POST['price']) && !empty($_POST['price'])) {
-        $product['products_price'] = (float)$_POST['price'];
+    if (isset($_REQUEST['price']) && !empty($_REQUEST['price'])) {
+        $product['products_price'] = (float)$_REQUEST['price'];
     }
-    if (isset($_POST['status']) && !empty($_POST['status'])) {
-        $product['products_status'] = (int)$_POST['status'];
+    if (isset($_REQUEST['status'])) {
+        $product['products_status'] = (int)$_REQUEST['status'];
     }
     elseif (0 == $product_id) {
         $product['products_status'] = 1;
@@ -1765,14 +1752,14 @@ function updateproduct() {
     }
 
     $description = [];
-    if (isset($_POST['name']) && !empty($_POST['name'])) {
-        $description['products_name'] = $_POST['name'];
+    if (isset($_REQUEST['name']) && !empty($_REQUEST['name'])) {
+        $description['products_name'] = $_REQUEST['name'];
     }
-    if (isset($_POST['description']) && !empty($_POST['description'])) {
-        $description['products_description'] = $_POST['description'];
+    if (isset($_REQUEST['description']) && !empty($_REQUEST['description'])) {
+        $description['products_description'] = $_REQUEST['description'];
     }
 
-    $category_id = (isset($_POST['categories']) && is_array($_POST['categories'])) ? (int)($_POST['categories'][0]) : 0;
+    $category_id = (isset($_REQUEST['categories']) && is_array($_REQUEST['categories'])) ? (int)($_REQUEST['categories'][0]) : 0;
 
     if (0 == $product_id) {
         if ((0 < count($product)) && (0 < count($description)) && (0 < $category_id)) {
@@ -1860,13 +1847,13 @@ function mainimage() {
         return $error_echo;
     }
     $success = false;
-    $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+    $product_id = isset($_REQUEST['product_id']) ? (int)$_REQUEST['product_id'] : 0;
     if (0 < $product_id) {
         $product_query = tep_db_query("SELECT products_image FROM " . TABLE_PRODUCTS . " WHERE products_id = " . $product_id);
         if (0 == $product_query->num_rows) {
             return json_encode(['error' => "Can not find product with id = " . $product_id, 'version' => API_VERSION, 'status' => false]);
         }
-        $image_id = isset($_POST['image_id']) ? (int)$_POST['image_id'] : 0;
+        $image_id = isset($_REQUEST['image_id']) ? (int)$_REQUEST['image_id'] : 0;
         if (0 < $image_id) {
             $image_query = tep_db_query("SELECT image FROM " . TABLE_PRODUCTS_IMAGES . " WHERE id = " . $image_id);
             if (0 == $image_query->num_rows) {
@@ -1929,14 +1916,14 @@ function deleteimage() {
         return $error_echo;
     }
     $success = false;
-    $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+    $product_id = isset($_REQUEST['product_id']) ? (int)$_REQUEST['product_id'] : 0;
     if (0 < $product_id) {
         $product_query = tep_db_query("SELECT products_image FROM " . TABLE_PRODUCTS . " WHERE products_id = " . $product_id);
         if (0 == $product_query->num_rows) {
             return json_encode(['error' => "Can not find product with id = " . $product_id, 'version' => API_VERSION, 'status' => false]);
         }
         $main_image_name = tep_db_fetch_array($product_query)['products_image'];
-        $image_id = isset($_POST['image_id']) ? (int)$_POST['image_id'] : 0;
+        $image_id = isset($_REQUEST['image_id']) ? (int)$_REQUEST['image_id'] : 0;
         if (0 < $image_id) {
             $image_query = tep_db_query("SELECT image FROM " . TABLE_PRODUCTS_IMAGES . " WHERE id = " . $image_id);
             if (0 == $image_query->num_rows) {
@@ -1950,13 +1937,18 @@ function deleteimage() {
                 }
             }
         }
-        elseif ((-1 == $image_id) && (!empty($main_image_name))) {
-            $product['products_image'] = '';
-            $success = dbProductUpdate($product_id, $product, [], 0);
-            // main image delete from folder only if image absent in `porducts_images` table
-            $image_query = tep_db_query("SELECT image FROM " . TABLE_PRODUCTS_IMAGES . " WHERE image = '" . $main_image_name . "'");
-            if ((0 == $image_query->num_rows) && (file_exists(DIR_WS_IMAGES . $main_image_name))) {
-                unlink(DIR_WS_IMAGES . $main_image_name);
+        elseif (-1 == $image_id) {
+            if (empty($main_image_name)) {
+                $success = true;
+            }
+            else {
+                $product['products_image'] = '';
+                $success = dbProductUpdate($product_id, $product, [], 0);
+                // main image delete from folder only if image absent in `porducts_images` table
+                $image_query = tep_db_query("SELECT image FROM " . TABLE_PRODUCTS_IMAGES . " WHERE image = '" . $main_image_name . "'");
+                if ((0 == $image_query->num_rows) && (file_exists(DIR_WS_IMAGES . $main_image_name))) {
+                    unlink(DIR_WS_IMAGES . $main_image_name);
+                }
             }
         }
     }
@@ -2123,21 +2115,24 @@ function getParentCategoryID($category_id) {
     }
 }
 
-function getProductCategories($categories_id) {
+function getProductCategories($category_id) {
     global $languages_id;
-    if (0 == (int)$categories_id) {
+    if (0 == (int)$category_id) {
         return null;
     }
-    $categories = [];
+    else {
+        $categories_id = $category_id;
+    }
+    $name = '';
+    $prefix = '';
     do {
         extract(tep_db_fetch_array(tep_db_query("SELECT categories_id, parent_id FROM " . TABLE_CATEGORIES . " WHERE categories_id = " . (int)$categories_id)));
-        if (isset($parent_id)) {
-            $name = tep_db_fetch_array(tep_db_query("SELECT categories_name FROM " . TABLE_CATEGORIES_DESCRIPTION . " WHERE categories_id = " . (int)$categories_id . " AND language_id = " . (int)$languages_id))['categories_name'];
-            $categories[] = ['category_id' => $categories_id, 'name' => $name];
-            $categories_id = $parent_id;
-        }
+        $addname = tep_db_fetch_array(tep_db_query("SELECT categories_name FROM " . TABLE_CATEGORIES_DESCRIPTION . " WHERE categories_id = " . (int)$categories_id . " AND language_id = " . (int)$languages_id))['categories_name'];
+        $name = $addname . $prefix . $name;
+        $prefix = ' - ';
+        $categories_id = $parent_id;
     } while (0 <> $parent_id);
-    return $categories;
+    return [['category_id' => $category_id, 'name' => $name]];
 }
 
 function dbProductUpdate($product_id, $product, $description, $category_id) {
