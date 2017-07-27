@@ -74,9 +74,6 @@ if (isset($_GET['route'])) {
         case 'getcategories':
             echo getcategories();
             break;
-        case 'getsubstatus':
-            echo getsubstatus();
-            break;
         default:
             break;
     }
@@ -1393,7 +1390,6 @@ function products() {
 * @apiSuccess {Number}  sku            SKU of the product.
 * @apiSuccess {Array}   images         Array of the pictures of the product.
 * @apiSuccess {Array}   categories     Array of the categories of the product.
-* @apiSuccess {Array}   stock_statuses Array of the stock statuses of the product.
 * @apiSuccess {String}  currency_code  Default currency of the shop.
 * @apiSuccess {Number}  version        Current API version.
 * @apiSuccess {Boolean} status         true.
@@ -1507,7 +1503,6 @@ function productinfo() {
             unset($product['categories']);
         }
         $product['images'] = $images;
-        $product['stock_statuses'] = getStockStatuses('');
         $product['stock_status_name'] = (0 < $product['quantity']) ? TEXT_PRODUCT_AVAILABLE : TEXT_PRODUCT_NOT_AVAILABLE;
         $product['status_name'] = ($product['status_name']) ? 'Enabled' : 'Disabled';
         $product['currency_code'] = getCurrency();
@@ -2061,55 +2056,6 @@ function getcategories() {
     return json_encode(['error' => "Missing some params", 'version' => API_VERSION, 'status' => false]);
 }
 
-/**
-* 
-* @api {get} api.php?route=getsubstatus getSubstatus
-* @apiName getSubstatus
-* @apiGroup Products
-* @apiVersion 2.0.1
-*
-* @apiParam {Token} token Your unique token.
-*
-* @apiSuccess {Array}   stock_statuses Array of the categories of the product.
-* @apiSuccess {Number}  version        Current API version.
-* @apiSuccess {Boolean} status         true.
-*
-* @apiSuccessExample Success-Response:
-* HTTP/1.1 200 OK
-* {
-*     "response": {
-*         "stock_statuses": [
-*             {
-*                 "stock_status_id": "0",
-*                 "name": "Нет в наличии"
-*             },
-*             {
-*                 "stock_status_id": "1",
-*                 "name": "В наличии"
-*             }
-*         ],
-*     },
-*     "version": 2,
-*     "status": true
-* }
-*
-* @apiErrorExample Error-Response:
-*
-* {
-*     "error": "You need to be logged!",
-*     "version": 2,
-*     "status" : false
-* }
-*
-*/
-function getsubstatus() { 
-    $error_echo = errorToken();
-    if ($error_echo) {
-        return $error_echo;
-    }
-    return json_encode(['response' => ['stock_statuses' => getStockStatuses('stock_')], 'version' => API_VERSION, 'status' => true]);
-}
-
 
 // ADDITIONAL FUNCTIONS //
 
@@ -2192,19 +2138,6 @@ function getProductCategories($categories_id) {
         }
     } while (0 <> $parent_id);
     return $categories;
-}
-
-function getStockStatuses($prefix = '') {
-    return [
-        [
-            $prefix . "status_id" => "0",
-            "name" => TEXT_PRODUCT_NOT_AVAILABLE
-        ],
-        [
-            $prefix . "status_id" => "1",
-            "name" => TEXT_PRODUCT_AVAILABLE
-        ]
-    ];
 }
 
 function dbProductUpdate($product_id, $product, $description, $category_id) {
