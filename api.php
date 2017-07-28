@@ -1484,7 +1484,7 @@ function productinfo() {
         for ($i = 1; $i <= $images_query->num_rows; $i++) {
             $images[] = tep_db_fetch_array($images_query);
         }
-        $product['description'] = strip_tags($product['description']);
+        $product['description'] = $product['description'];
         $product['categories'] = getProductCategories($product['categories']);
         if (empty($product['categories'])) {
             unset($product['categories']);

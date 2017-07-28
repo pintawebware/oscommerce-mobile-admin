@@ -1,5 +1,5 @@
 <?php
-if ($_REQUEST['main_page'] == 'checkout_success') {
+if (basename($PHP_SELF) == FILENAME_CHECKOUT_SUCCESS) {
     sendNotifications();
 }
 
@@ -12,12 +12,9 @@ function sendNotifications() {
     INNER JOIN " . TABLE_ORDERS_TOTAL . " ot ON o.orders_id = ot.orders_id AND ot.class = 'ot_total' 
     WHERE o.orders_id = (SELECT MAX(orders_id) FROM orders)";
 
-
-    tep_db_fetch_array(tep_db_query(""))['configuration_value'];
-
     $order = tep_db_fetch_array(tep_db_query($order_sql));
 
-    $devices_query = tep_db_query("SELECT * FROM user_device_mob_api GROUP BY device_token"); 
+    $devices_query = tep_db_query("SELECT * FROM user_device_mob_api GROUP BY device_token");
 
     $devices = [];
     for ($i = 1; $i <= $devices_query->num_rows; $i++) {
